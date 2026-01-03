@@ -25,43 +25,89 @@ Design an Email Service Provider (ESP) that supports thousands of customers send
 - Scale for peak periods such as holiday campaigns.
 - Guarantee at-least-once delivery.
 
+## Back-of-the-envelope calculations
+Capture early capacity estimates so the rest of the design is grounded in numbers.
+
+- **Inputs to estimate**: target geography, DAU/MAU, average sessions per user per day, average session length, requests per session, read/write ratio, payload sizes, data retention window.
+- **Core traffic metrics**:
+  - **DAU**: `~10000`
+  - **TPS**: `(10000 * 15000) / 86,400 = ~1750`
+  - **QPS**: `(10000 * 1000) / 86,400 = ~115`
+  - **Peak TPS**: `avg TPS * peak_factor -> 1750 x 5 = ~8750`
+- **Data volume**:
+  - **Average attachment size**: `5 MB`
+  - **Avrage emails with attachments**: `20% of 150M = 30M`
+  - **Daily storage**: `30M * 5MB = ~1.5 TB`
+- **Other factors to call out**: latency targets, availability SLA, fanout amplification, cache hit rate, and burst handling strategy.
+
 ## Goals and Non-Goals
 ### Goals
-- [TBD] What success looks like for this system.
+- Provide a reliable multi-tenant ESP that routes traffic across providers to meet latency, cost, and quota targets.
+- Deliver OTP emails with low latency while sustaining high-volume bulk and transactional throughput.
+- Offer delivery tracking, retries, and analytics with at-least-once delivery guarantees.
+- Scale elastically for peak campaigns without degrading reliability.
 
 ### Non-Goals
-- [TBD] Explicitly exclude features or use cases.
+- Building a full marketing automation suite (journeys, CRM, lead scoring).
+- Operating an MTA from scratch; leverage third-party providers.
+- End-user mailbox features (inbox UI, storage, spam filtering).
 
 ## Scope and Assumptions
 ### Scope
-- [TBD] In-scope features for this iteration.
+- Email ingestion APIs for OTP, bulk, and transactional sends.
+- Provider routing with quotas, rate limits, and health-aware failover.
+- Attachment storage and retrieval with per-attachment size enforcement.
+- Delivery events, status tracking, and reporting dashboards.
 
 ### Assumptions
-- [TBD] Known constraints and business assumptions.
+- Tenants have pre-configured providers, credentials, and default routing policies.
+- Attachments are stored in object storage and referenced by ID during send.
+- Provider webhooks are available for delivery, bounce, and complaint events.
+- Data retention policies allow at least 30-90 days of event history.
 
 ## Stakeholders
-- [TBD] Product, engineering, legal/compliance, operations, users.
+- Product management, platform engineering, SRE/operations, security/compliance, and customer success.
+- External email providers and enterprise customers with SLAs.
 
 ## System Overview
-- [TBD] 2-4 sentences summarizing the architecture at a high level.
+- The system exposes a multi-tenant API for email ingestion, validates requests, stores attachments, and enqueues messages for delivery.
+- A routing service selects providers based on latency, cost, quotas, and health while honoring tenant policies.
+- Async workers send emails via provider adapters and emit delivery events to reporting and analytics pipelines.
 
 ## Architecture at a Glance
-- [TBD] Bullet list of primary components and their roles.
+- Client SDKs and partner integrations for email submission.
+- API gateway for auth, rate limiting, and request validation.
+- Core services: ingestion, routing, scheduling, and provider adapters.
+- Data stores for tenant config, message metadata, delivery events, and attachments.
+- Messaging layer with queues/streams for send and event processing.
 
 ## Key Workflows
-- [TBD] 3-5 user or system flows (e.g., "User signup", "Create order").
+- Submit OTP email: ingest, validate, enqueue, route, send, track delivery.
+- Submit bulk campaign: ingest batch, schedule, throttle per tenant, send, aggregate metrics.
+- Provider failover: detect errors, reroute to backup provider, retry with idempotency keys.
+- Delivery events: ingest webhooks, normalize, update status, publish analytics.
 
 ## Data Model Summary
-- [TBD] Key entities and relationships.
+- Tenant, ProviderConfig, RoutingPolicy, and RateLimit for configuration.
+- Message, Recipient, Attachment, and SendAttempt for delivery tracking.
+- DeliveryEvent and Metric aggregates for reporting.
 
 ## Scale and Capacity
-- [TBD] Expected DAU/MAU, peak RPS, data size, growth assumptions.
+- 150M emails per day average, with 3-5x peaks during campaigns.
+- Peak ingestion in the tens of thousands of requests per second with burst control.
+- Event volumes proportional to sends (delivery, bounce, complaint, open, click).
 
 ## Constraints and Risks
-- [TBD] Regulatory constraints, budget, legacy integrations, risk areas.
+- Provider outages and throttling require fast failover and backpressure.
+- Compliance obligations for PII, opt-out, and regional data residency.
+- Large attachments increase storage and egress cost risk.
 
 ## Open Questions
-- [TBD] Items needing clarification.
+- Exact SLAs for OTP latency and delivery success rates.
+- Required data retention periods and deletion workflows per tenant.
+- Provider selection policy and cost optimization strategy ownership.
 
 ## References
-- [TBD] Links to docs, tickets, or external constraints.
+- `high-level-design.md`
+- `functional-requirements.md`
+- `nonfunctional-requirements.md`
