@@ -25,7 +25,6 @@ bulk emails is another feature which is going to be used by our customers, we mu
 - report and analytics is important
 
 ### Non-Functional Requirements (High Level)
-- [TBD] Latency, availability, durability, throughput, scale, security.
 - Latency should be at minimum for OTP emails.
 - Availability of service is a crucial factor
 - latency of providers are different
