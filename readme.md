@@ -6,32 +6,24 @@ Fill in sections marked with [TBD].
 # <img src="assets/favicon.png" alt="Icon" width="28" height="28" /> ESP (Email-Service-Provider) System Design
 
 ## Problem Statement
-We're going to provider an ESP which is going to be use by thousands of users to handle milions of emails daily, these users are going to use their credits to send different types of emails such OTP, bulk and simple emails.
-Each email might have several attachments, and maximum attachment size is 150MB for each attachment.
-we have several email providers like mailgun which have different latencies and costs and quotas which must be considerd while selecting target provider.
-delivery report is mandatory and retrying is also a key feature for emails, sepcifically OTP emails.
-low latencies for OTP emails is really important and should be considered.
-since each customer have it's own rate limit and qouta, each provider also use this policy for us to use them.
-providers might be down, not responding and cost heavily, we should always consider these parameters as key important parameters to select our provider and reduce costs.
-due to high load for different periods of time like black friday and other holidays, different compaigns might be run by customers which increase the load much more than regular days, we should be able to scale and able to handle them.
-bulk emails is another feature which is going to be used by our customers, we must be able to handle them.
+Design an Email Service Provider (ESP) that supports thousands of customers sending millions of emails per day across different email types (OTP, bulk, and standard transactional). Messages may include multiple attachments, with a maximum size of 150MB per attachment. The system must route email through multiple third-party providers with varying latency, cost, and quota constraints while ensuring delivery reporting, retries (especially for OTP), and low latency for time-sensitive messages. Each customer has its own rate limits and quotas, and provider availability or cost spikes must be handled gracefully. The platform must scale to seasonal spikes (e.g., holiday campaigns) without sacrificing reliability or delivery guarantees.
 
 ## Requirements Summary
 ### Functional Requirements (High Level)
-- 150M daily emails
-- attachments should be considered
-- providers should be easily added and removed
-- bulk send
-- report and analytics is important
+- Support up to 150M emails per day across OTP, bulk, and standard transactional sends.
+- Allow multiple attachments per email, up to 150MB per attachment.
+- Integrate multiple providers and enable easy onboarding/removal of providers.
+- Provide delivery reports and analytics.
+- Support bulk email sends at scale.
 
 ### Non-Functional Requirements (High Level)
-- Latency should be at minimum for OTP emails.
-- Availability of service is a crucial factor
-- latency of providers are different
-- maximum size of attachments should be 150MB
-- system shoud be able to handle AVG(150 milions) of daily email
-- system should be able to scale for peak times like holidays
-- system should gurantee delivery of at-least-once
+- Minimize latency for OTP emails.
+- Maintain high availability despite provider outages or degraded performance.
+- Handle differing provider latencies, quotas, and costs during routing decisions.
+- Enforce 150MB maximum attachment size per attachment.
+- Sustain an average throughput of ~150M emails per day.
+- Scale for peak periods such as holiday campaigns.
+- Guarantee at-least-once delivery.
 
 ## Goals and Non-Goals
 ### Goals
